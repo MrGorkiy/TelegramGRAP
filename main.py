@@ -23,7 +23,7 @@ KEYS = {
     r"https://\S+": f"vk.com/club{GROUP_ID}",
     r"t.me/\S+": f"vk.com/club{GROUP_ID}",
     r"http://\S+": f"vk.com/club{GROUP_ID}",
-    "файл смерти": "сайл фмерти",
+    "Новости": "Последние события",
 }
 
 # СТОП СЛОВО - не будем публиковать если содержится
@@ -34,26 +34,6 @@ BAD_KEYS = [
     "канал",
     "бот",
     "подписаться",
-    "подписывайся",
-    "xxx",
-    "ххх",
-    "xbet",
-    "посщу",
-    "футбола",
-    "футбол",
-    "канале",
-    "подписывайтесь",
-    "подпишись",
-    "паблик",
-    "разыграть",
-    "эстетика",
-    "нулевых",
-    "постить",
-    "файлы",
-    "канала",
-    "заходи",
-    "запрещённый",
-    "контент",
 ]
 
 
@@ -87,7 +67,8 @@ def save_video(upload_response):
     return f'video{upload_response["owner_id"]}_{upload_response["video_id"]}'
 
 
-def message_send(peer_id, text=None, keyboard=None, attachment=None, forward=None):
+def message_send(peer_id, text=None, keyboard=None,
+                 attachment=None, forward=None):
     """Отправка сообщения по peer_id, без уведомления в чате"""
     post = {
         "peer_id": peer_id,
@@ -122,46 +103,40 @@ def correct_context(path, text=None):
     if path[-3:] == "mp4":
         upload = getwalluploadserver()
         file = {"file1": open(path, "rb")}
-        upload_response = requests.post(upload["upload_url"], files=file).json()
+        upload_response = requests.post(upload["upload_url"],
+                                        files=file).json()
         file["file1"].close()
         if text:
-            message_send(PEER_CHAT, text=text, attachment=save_video(upload_response))
+            message_send(PEER_CHAT, text=text,
+                         attachment=save_video(upload_response))
         else:
             message_send(PEER_CHAT, attachment=save_video(upload_response))
     elif path[-3:] == "jpg":
         upload = VkUpload(api_vkontakte)
         if text:
-            message_send(
-                PEER_CHAT, text=text, attachment=upload_loc_photo(upload, path)
-            )
+            message_send(PEER_CHAT, text=text,
+                         attachment=upload_loc_photo(upload, path))
         else:
             message_send(PEER_CHAT, attachment=upload_loc_photo(upload, path))
     os.remove(path)
 
 
 with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
-    client.start()  # если включена 2FA то переадем пароль (password='пароль')
+    client.start()  # если включена 2FA то передаем пароль (password='пароль')
     print("Бот запустился, полет нормальный")
 
     @client.on(events.NewMessage(chats=CHANNELS))
     async def messages(event):
         # print('event: ', event)  # для отладки
 
-        if not [
-            element
-            for element in BAD_KEYS
-            if event.raw_text.lower().__contains__(element)
-        ]:
+        if not [element for element in BAD_KEYS
+                if event.raw_text.lower().__contains__(element)]:
             text = event.raw_text
             for i in KEYS:
                 text = re.sub(i, KEYS[i], text)
 
-            if (
-                event.message.text
-                and not event.message.media
-                and not event.message.forward
-                and not event.grouped_id
-            ):
+            if (event.message.text and not event.message.media
+                    and not event.message.forward and not event.grouped_id):
                 print("\nОтправка текста: ", text[:100], "\n")
                 message_send(PEER_CHAT, text)
 
@@ -192,7 +167,8 @@ with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
             else:
                 print("\nИгронирую: ", text[:100], "\n")
         else:
-            print("Игнорирую по ключу")
+            print("Игнорирую по ключу:", [element for element in BAD_KEYS
+                                          if event.raw_text.lower().__contains__(element)])
 
     @client.on(events.Album(chats=CHANNELS))
     async def album(event):
@@ -200,7 +176,8 @@ with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
         if not text:
             text = event.raw_text
         # print('text: ', text)
-        if not [element for element in BAD_KEYS if text.lower().__contains__(element)]:
+        if not [element for element in BAD_KEYS
+                if text.lower().__contains__(element)]:
             for i in KEYS:
                 text = re.sub(i, KEYS[i], text)
 
@@ -212,9 +189,8 @@ with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
                     if path[-3:] == "mp4":
                         upload = getwalluploadserver()
                         file = {"file1": open(path, "rb")}
-                        upload_response = requests.post(
-                            upload["upload_url"], files=file
-                        ).json()
+                        upload_response = requests.post(upload["upload_url"],
+                                                        files=file).json()
                         file["file1"].close()
                         attachments.append(save_video(upload_response))
                     elif path[-3:] == "jpg":
@@ -223,7 +199,8 @@ with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
                     os.remove(path)
             print("\nОтправка множества вложений: ", text[:100], "\n\n")
             if text:
-                message_send(PEER_CHAT, text=text, attachment=",".join(attachments))
+                message_send(PEER_CHAT, text=text,
+                             attachment=",".join(attachments))
             else:
                 message_send(PEER_CHAT, attachment=",".join(attachments))
 
