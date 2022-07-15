@@ -11,14 +11,13 @@ from vk_api.utils import get_random_id
 from confing import *
 
 # Подключаемся к ВК
-
 vkontakte = vk_api.VkApi(token=VK_TOKEN)
 api_vkontakte = vkontakte.get_api()
 
 # каналы откуда берем сообщения
 CHANNELS = ["@bolshenews", -1001708761316]
 
-# заменяем нежелательные выражения, перед пересылкой
+# заменяем нежелательные выражения, перед пересылкой, можно использовать регулярки
 KEYS = {
     r"@\S+": "@неважно",
     r"https://\S+": f"vk.com/club{GROUP_ID}",
@@ -42,7 +41,8 @@ OWE_BAD = ['бот', 'бота']
 
 def metod_vk_api(metod, params):
     requests.get(
-        f"https://api.vk.com/method/{metod}?&access_token={VK_TOKEN_SELF}&v={V}",
+        f"https://api.vk.com/method/{metod}?"
+        f"&access_token={VK_TOKEN_APPLICATION}&v={V}",
         params=params,
     ).json()
 
@@ -181,7 +181,7 @@ def correct_context(path, text=None):
     os.remove(path)
 
 
-with TelegramClient("TelegramBOT", API_ID, API_HASH) as client:
+with TelegramClient("TelegramBOT", API_ID_TG, API_HASH_TG) as client:
     client.start()  # если включена 2FA то передаем пароль (password='пароль')
     print("Бот запустился, полет нормальный")
 
